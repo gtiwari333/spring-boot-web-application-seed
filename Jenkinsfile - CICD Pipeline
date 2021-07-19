@@ -1,0 +1,39 @@
+node{
+     def buildNumber = BUILD_NUMBER
+    stage("Git CheckOut"){
+        git url: 'https://github.com/Habeeb101/spring-boot-web-application-sample.git',branch: 'master'
+    }
+    
+    stage(" Maven Clean Package"){
+      def mavenHome =  tool name: "Maven", type: "maven"
+      def mavenCMD = "${mavenHome}/bin/mvn"
+      sh "${mavenCMD} clean package"
+    } 
+    
+    // Executing For Code Quality Check - SONARQUBE
+    stage('SonarQubeReportExecution'){
+       sh "${mavenHome}/bin/mvn sonar:sonar"
+   }
+
+    stage("Build Dokcer Image") {
+         sh "docker build -t ip-address:port-number/spring-boot-mongo:${buildNumber}  ."
+    }
+    
+    stage("Docker Push"){
+        withCredentials([string(credentialsId: 'Your_repo_pass', variable: 'Your_repo_pass')]) {
+          sh "docker login -u username -p ${Your_repo_pass} ip-address:port-number"
+        }
+        sh "docker push ip-address:port-number/spring-boot-mongo:${buildNumber}"
+        
+    }
+    
+    stage("Deploy to docker swarm cluster"){
+        sshagent(['Your_Swarm_Manager']) {
+        sh 'ssh -o StrictHostKeyChecking=no username@swarm_server_ip docker stack rm springboot || true'
+        withCredentials([string(credentialsId: 'Your_repo_pass', variable: 'Your_repo_pass')]) {
+		      sh "ssh -o StrictHostKeyChecking=no username@warm_server_ip docker login -u username -p ${Your_repo_pass}  ip-address:port-number"
+         }
+          sh 'ssh -o StrictHostKeyChecking=no username@swarm_server_ip docker stack deploy --prune --compose-file docker-compose.yml ip-address:port-number/spring-boot-mongo:${buildNumber}'
+        }
+    }
+}

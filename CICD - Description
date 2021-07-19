@@ -1,0 +1,9 @@
+As part of this CICD Pipeline - 
+When ever devloper commits the code to SCM the cicd server( Jenkins ) will pull the latest code form the scm using jenkins job.
+It will compile the code and it will generate package ( war/jar ) using MAVEN.
+It will generate Sonarqube report using jenkins server will upload the code quality reports to the sonarqube server.
+Using Dockerfile will create docker image.
+The jenkins server will push the build artifacts to repositories like Nexus/Jfrog/DTR.
+Jenkins Server will connect to Docker Swarm Master using some sshaget
+The Docker Swarm cluster will connect to artifact server and it will pull the images.
+The Master macheine will create containers on worker nodes and will depoy the application.
